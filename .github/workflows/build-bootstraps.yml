@@ -71,7 +71,7 @@ jobs:
   release:
     needs: bootstraps
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event.inputs.release == 'true' && startsWith(github.event.inputs.tag, 'v')
+    if: true
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
           file_glob: true
           checksums: sha256
           tag: ${{ github.event.inputs.tag }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
   apk:
     needs: bootstraps
