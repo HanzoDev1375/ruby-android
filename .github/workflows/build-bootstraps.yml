@@ -1,14 +1,7 @@
-name: Build bootstraps
+name: Simple Bootstrap Builder
 
 on:
   workflow_dispatch:
-    inputs:
-      release:
-        type: boolean
-        description: "Release built bootstraps"
-      tag:
-        type: string
-        description: "Tag for the release"
 
 jobs:
   bootstraps:
@@ -55,80 +48,15 @@ jobs:
           find packages/libxml2 -type f -name "*python*" -exec rm {} +
           sudo mkdir -p /home/builder && mv ./* /home/builder
 
-      - name: Create bootstrap archive
+      - name: Build bootstrap
         working-directory: /home/builder
         run: |
           ./clean.sh
           ./scripts/setup-android-sdk.sh
           ./scripts/build-bootstraps.sh --android10 --architectures ${{ matrix.target_arch }}
 
-      - name: Store bootstrap
+      - name: Upload bootstrap ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: ruby-${{ matrix.target_arch }}
+          name: bootstrap-${{ matrix.target_arch }}
           path: "/home/builder/*.zip"
-
-  release:
-    needs: bootstraps
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event.inputs.release == 'true' && startsWith(github.event.inputs.tag, 'v')
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Fetch bootstrap archives
-        uses: actions/download-artifact@v4
-        with:
-          path: ./
-          merge-multiple: true
-
-      - name: Create new tag
-        run: |
-          git tag "${{ github.event.inputs.tag }}"
-          git push --tags
-
-      - name: Publish bootstrap zips to GitHub release
-        uses: termux/upload-release-action@v4.1.0
-        with:
-          file: "*.zip"
-          file_glob: true
-          checksums: sha256
-          tag: ${{ github.event.inputs.tag }}
-          repo_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-  apk:
-    needs: bootstraps
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Fetch bootstrap archives
-        uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-          path: ./
-
-      - name: Setup java
-        uses: actions/setup-java@v1
-        with:
-          java-version: 17
-
-      - name: Build apk
-        run: |
-          git clone https://github.com/jekyllex/termux-app --depth 1
-          ls -l *.zip || echo "No zip files found"
-          mkdir -p termux-app/bootstraps
-          mv *.zip termux-app/bootstraps || true
-          cd termux-app
-          ./gradlew assembleDebug
-
-      - name: Store generated APK file
-        uses: actions/upload-artifact@v4
-        with:
-          name: termux-app
-          path: ./termux-app/app/build/outputs/apk/debug/*.apk
