@@ -121,7 +121,9 @@ jobs:
       - name: Build apk
         run: |
           git clone https://github.com/jekyllex/termux-app --depth 1
-          mv *.zip termux-app/bootstraps
+          ls -l *.zip || echo "No zip files found"
+          mkdir -p termux-app/bootstraps
+          mv *.zip termux-app/bootstraps || true
           cd termux-app
           ./gradlew assembleDebug
 
