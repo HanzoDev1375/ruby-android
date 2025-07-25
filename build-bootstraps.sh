@@ -408,6 +408,7 @@ main() {
 		PACKAGES+=("libxslt")
 		PACKAGES+=("libxml2")
 		PACKAGES+=("ruby")
+		PACKAGES+=("php")
 		PACKAGES+=("git")
 
 		# Handle additional packages.
